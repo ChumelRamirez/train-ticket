@@ -23,4 +23,5 @@ message TicketReceipt {
     string last_name = 4;
     string email = 5;
     double price_paid = 6;
+    string seat_section = 7;
 }

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 
 	pb "github.com/ChumelRamirez/train-ticket/proto"
@@ -23,13 +24,19 @@ type server struct {
 // purchase ticket function
 func (s *server) PurchaseTicket(ctx context.Context, in *pb.TicketRequest) (*pb.TicketReceipt, error) {
 	log.Printf("Ticket request for: %v", in.GetFirstName()+" "+in.GetLastName())
+	// randomizing seat section
+	sections := []string{"A", "B"}
+	randIndex := rand.Intn(len(sections))
+	seat := sections[randIndex]
+
 	return &pb.TicketReceipt{
-		From:      in.GetFrom(),
-		To:        in.GetTo(),
-		FirstName: in.FirstName,
-		LastName:  in.LastName,
-		Email:     in.Email,
-		PricePaid: 20.00,
+		From:        in.GetFrom(),
+		To:          in.GetTo(),
+		FirstName:   in.FirstName,
+		LastName:    in.LastName,
+		Email:       in.Email,
+		PricePaid:   20.00,
+		SeatSection: seat,
 	}, nil
 }
 
