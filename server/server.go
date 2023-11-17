@@ -11,10 +11,13 @@ import (
 	pb "github.com/ChumelRamirez/train-ticket/proto"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 var (
-	port = flag.Int("port", 50505, "The server port")
+	port                                   = flag.Int("port", 50505, "The server port")
+	sections                               = []string{"A", "B"}
+	ticketMap map[string]*pb.TicketReceipt = map[string]*pb.TicketReceipt{}
 )
 
 type server struct {
@@ -23,21 +26,41 @@ type server struct {
 
 // purchase ticket function
 func (s *server) PurchaseTicket(ctx context.Context, in *pb.TicketRequest) (*pb.TicketReceipt, error) {
-	log.Printf("Ticket request for: %v", in.GetFirstName()+" "+in.GetLastName())
-	// randomizing seat section
-	sections := []string{"A", "B"}
-	randIndex := rand.Intn(len(sections))
-	seat := sections[randIndex]
+	log.Printf("\nTicket request for: %v", in.GetEmail())
+	var tr *pb.TicketReceipt = &pb.TicketReceipt{}
+	if ticketMap[in.GetEmail()] != nil {
+		log.Printf("Ticket already purchased for: %v", in.GetEmail())
+		return tr, status.Error(6, "ALREADY_EXISTS: Ticket for this email address already purchased. Please use a different endpoint to update existing tickets.")
+	} else {
+		// randomizing seat section
+		sectionIndex := rand.Intn(len(sections))
+		seat := sections[sectionIndex]
+		// seat := fmt.Sprint(rand.Intn(30)+1) + sections[sectionIndex]
+		tr = &pb.TicketReceipt{
+			From:        in.GetFrom(),
+			To:          in.GetTo(),
+			FirstName:   in.GetFirstName(),
+			LastName:    in.GetLastName(),
+			Email:       in.GetEmail(),
+			PricePaid:   20.00,
+			SeatSection: seat,
+		}
+		ticketMap[in.GetEmail()] = tr
+		// todo delete print
+		for k, v := range ticketMap {
+			log.Printf("Ticket for user %v: \n%v", k, v)
+		}
+		return tr, nil
+	}
+}
 
-	return &pb.TicketReceipt{
-		From:        in.GetFrom(),
-		To:          in.GetTo(),
-		FirstName:   in.FirstName,
-		LastName:    in.LastName,
-		Email:       in.Email,
-		PricePaid:   20.00,
-		SeatSection: seat,
-	}, nil
+// get receipt details function
+func (s *server) GetReceipt(ctx context.Context, rr *pb.ReceiptRequest) (*pb.TicketReceipt, error) {
+	if ticketMap[rr.GetEmail()] != nil {
+		return ticketMap[rr.GetEmail()], nil
+	} else {
+		return &pb.TicketReceipt{}, status.Error(5, "NOT_FOUND")
+	}
 }
 
 func main() {

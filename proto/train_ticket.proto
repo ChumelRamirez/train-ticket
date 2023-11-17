@@ -6,6 +6,7 @@ package proto;
 
 service TrainTicket {
     rpc PurchaseTicket(TicketRequest) returns (TicketReceipt) {}
+    rpc GetReceipt(ReceiptRequest) returns (TicketReceipt) {}
 }
 
 message TicketRequest {
@@ -24,4 +25,8 @@ message TicketReceipt {
     string email = 5;
     double price_paid = 6;
     string seat_section = 7;
+}
+
+message ReceiptRequest{
+    string email = 1;
 }
