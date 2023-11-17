@@ -18,6 +18,8 @@ var (
 	port                                   = flag.Int("port", 50505, "The server port")
 	sections                               = []string{"A", "B"}
 	ticketMap map[string]*pb.TicketReceipt = map[string]*pb.TicketReceipt{}
+	// ticketMap map[*pb.User]*pb.TicketReceipt = map[*pb.User]*pb.TicketReceipt{}
+	// sectionMap map[string]*pb.Users = map[string]*pb.Users{}
 )
 
 type server struct {
@@ -27,16 +29,15 @@ type server struct {
 // purchase ticket function
 func (s *server) PurchaseTicket(ctx context.Context, in *pb.TicketRequest) (*pb.TicketReceipt, error) {
 	log.Printf("\nTicket request for: %v", in.GetEmail())
-	var tr *pb.TicketReceipt = &pb.TicketReceipt{}
 	if ticketMap[in.GetEmail()] != nil {
 		log.Printf("Ticket already purchased for: %v", in.GetEmail())
-		return tr, status.Error(6, "ALREADY_EXISTS: Ticket for this email address already purchased. Please use a different endpoint to update existing tickets.")
+		return &pb.TicketReceipt{}, status.Error(6, "ALREADY_EXISTS: ticket for this email address already purchased. Please use a different endpoint to update existing tickets.")
 	} else {
 		// randomizing seat section
 		sectionIndex := rand.Intn(len(sections))
 		seat := sections[sectionIndex]
 		// seat := fmt.Sprint(rand.Intn(30)+1) + sections[sectionIndex]
-		tr = &pb.TicketReceipt{
+		tr := &pb.TicketReceipt{
 			From:        in.GetFrom(),
 			To:          in.GetTo(),
 			FirstName:   in.GetFirstName(),
@@ -59,8 +60,24 @@ func (s *server) GetReceipt(ctx context.Context, rr *pb.ReceiptRequest) (*pb.Tic
 	if ticketMap[rr.GetEmail()] != nil {
 		return ticketMap[rr.GetEmail()], nil
 	} else {
-		return &pb.TicketReceipt{}, status.Error(5, "NOT_FOUND")
+		return &pb.TicketReceipt{}, status.Error(5, "NOT_FOUND: receipt for this email address was not found.")
 	}
+}
+
+// get users by section
+func (s *server) GetSectionUsers(ctx context.Context, sec *pb.Section) (*pb.Users, error) {
+	users := &pb.Users{}
+	for _, v := range ticketMap {
+		if v.GetSeatSection() == sec.GetSeatSection() {
+			users.Users = append(users.Users, &pb.Users_User{
+				FirstName:   v.GetFirstName(),
+				LastName:    v.GetLastName(),
+				Email:       v.GetEmail(),
+				SeatSection: v.GetSeatSection(),
+			})
+		}
+	}
+	return users, nil
 }
 
 func main() {
