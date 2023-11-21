@@ -6,8 +6,10 @@ package proto;
 
 service TrainTicket {
     rpc PurchaseTicket(TicketRequest) returns (TicketReceipt) {}
-    rpc GetReceipt(ReceiptRequest) returns (TicketReceipt) {}
+    rpc GetReceipt(UserEmail) returns (TicketReceipt) {}
     rpc GetSectionUsers(Section) returns (Users) {}
+    rpc RemoveUser(UserEmail) returns (ResponseMsgString) {}
+    rpc ModifyUserSeat(UserEmail) returns (TicketReceipt) {}
 }
 
 message TicketRequest {
@@ -28,9 +30,9 @@ message TicketReceipt {
     string seat_section = 7;
 }
 
-message ReceiptRequest {
-    string email = 1;
-}
+// message ReceiptRequest {
+//     string email = 1;
+// }
 
 message Section {
     string seat_section = 1;
@@ -38,6 +40,7 @@ message Section {
 
 message Users {
     repeated User users = 1;
+    string seat_section = 2;
     
     message User {
         string first_name = 1;
@@ -45,4 +48,16 @@ message Users {
         string email = 3;
         string seat_section = 4;
     }
+}
+
+// message UserToRemove {
+//     string email = 1;
+// }
+
+message ResponseMsgString {
+    string responseMsg = 1;
+}
+
+message UserEmail {
+    string email = 1;
 }
