@@ -10,6 +10,8 @@ service TrainTicket {
     rpc GetSectionUsers(Section) returns (Users) {}
     rpc RemoveUser(UserEmail) returns (ResponseMsgString) {}
     rpc ModifyUserSeat(UserEmail) returns (TicketReceipt) {}
+    rpc ApplyDiscount(TicketRequest) returns (TicketReceipt) {}
+    rpc RemoveUserBySeat(TicketRequest) returns (ResponseMsgString) {}
 }
 
 message TicketRequest {
@@ -18,6 +20,10 @@ message TicketRequest {
     string first_name = 3;
     string last_name = 4;
     string email = 5;
+    string discount_code = 6;
+    string seat_section = 7;
+    string seat_number = 8;
+
 }
 
 message TicketReceipt {
@@ -28,6 +34,7 @@ message TicketReceipt {
     string email = 5;
     double price_paid = 6;
     string seat_section = 7;
+    string seat_number = 8;
 }
 
 message Section {
