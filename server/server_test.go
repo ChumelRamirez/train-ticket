@@ -20,8 +20,8 @@ func TestTrainTicketService(t *testing.T) {
 
 	tr := testPurchaseTicket(ctx, client, testEmail, t)
 	testGetReceipt(ctx, client, testEmail, t)
-	testGetSectionUsers(ctx, client, t)
-	testModifySeat(ctx, tr, client, testEmail, t)
+	testGetSectionUsers(ctx, client, t, tr.SeatSection)
+	testModifyUserSeat(ctx, tr, client, testEmail, t)
 	testRemoveUser(ctx, client, testEmail, t)
 }
 
@@ -70,6 +70,19 @@ func testPurchaseTicket(ctx context.Context, client pb.TrainTicketClient, testEm
 	if tr.SeatSection != "A" && tr.SeatSection != "B" {
 		t.Errorf("PurchaseTicket Seat Section not assigned correctly.")
 	}
+	// test negative scenario
+	_, er := client.PurchaseTicket(ctx, &pb.TicketRequest{
+		From:      "London",
+		To:        "France",
+		FirstName: "Michael",
+		LastName:  "Scott",
+		Email:     testEmail,
+	})
+	if er == nil {
+		t.Errorf("PurchaseTicket negative scenario test failed.")
+	}
+
+	// return ticket
 	return tr
 }
 
@@ -83,11 +96,18 @@ func testGetReceipt(ctx context.Context, client pb.TrainTicketClient, testEmail 
 	if r.GetEmail() != testEmail {
 		t.Errorf("GetReceipt test failed.")
 	}
+	// test negative scenario
+	_, er := client.GetReceipt(ctx, &pb.UserEmail{
+		Email: "testEmail",
+	})
+	if er == nil {
+		t.Errorf("GetReceipt negative scenario test failed.")
+	}
 }
 
-func testGetSectionUsers(ctx context.Context, client pb.TrainTicketClient, t *testing.T) {
+func testGetSectionUsers(ctx context.Context, client pb.TrainTicketClient, t *testing.T, s string) {
 	users, err := client.GetSectionUsers(ctx, &pb.Section{
-		SeatSection: "A",
+		SeatSection: s,
 	})
 	if err != nil {
 		t.Fatal("Fatal error testing GetSectionUsers")
@@ -97,7 +117,7 @@ func testGetSectionUsers(ctx context.Context, client pb.TrainTicketClient, t *te
 	}
 }
 
-func testModifySeat(ctx context.Context, tr *pb.TicketReceipt, client pb.TrainTicketClient, testEmail string, t *testing.T) {
+func testModifyUserSeat(ctx context.Context, tr *pb.TicketReceipt, client pb.TrainTicketClient, testEmail string, t *testing.T) {
 	seat := tr.SeatSection
 	mt, err := client.ModifyUserSeat(ctx, &pb.UserEmail{
 		Email: testEmail,
@@ -107,6 +127,13 @@ func testModifySeat(ctx context.Context, tr *pb.TicketReceipt, client pb.TrainTi
 	}
 	if seat == mt.SeatSection {
 		t.Errorf("ModifyUserSeat test failed.")
+	}
+	// test negative scenario
+	_, er := client.ModifyUserSeat(ctx, &pb.UserEmail{
+		Email: "testEmail",
+	})
+	if er == nil {
+		t.Errorf("ModifyUserSeat negative scenario test failed.")
 	}
 }
 
@@ -119,5 +146,12 @@ func testRemoveUser(ctx context.Context, client pb.TrainTicketClient, testEmail 
 	}
 	if msg == nil {
 		t.Errorf("RemoveUser test failed.")
+	}
+	// test negative scenario
+	_, er := client.RemoveUser(ctx, &pb.UserEmail{
+		Email: "testEmail",
+	})
+	if er == nil {
+		t.Errorf("RemoveUser negative scenario test failed.")
 	}
 }
